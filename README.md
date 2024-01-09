@@ -28,13 +28,27 @@ Look in ```config.json``` for an example configuration.
 	"engine": "path to the folder with the accelerated model",
 	"min_batch_size": depends on your configuration,
 	"max_batch_size": depends on your configuration,
+ 	"ndi_name": "NDI client name to recieve from",
 	"osc_out_adress": client address for receiving FPS value,
 	"osc_out_port": client port for receiving FPS value,
 	"osc_in_adress": server address for receiving commands.,
 	"osc_in_port": server port for receiving commands.
 
 
+## This project is a fork of [StreamDiffusion-NDI](https://github.com/olegchomp/StreamDiffusion-NDI) with additional features and modifications. 
 
-conda activate streamdiffusion_touchdesigner_3.10.0
-cd /StreamDiffusion-NDI
-python sd_ndi.py
+The main changes include:
+
+1. The addition of a TouchDesigner folder containing TD files.
+2. The `sd_ndi_td.py` script has been modified to interact with TouchDesigner and handle two types of prompts.
+3. The NDI source can be refreshed and selected.
+4. A batch file has been created to activate the conda environment and start the Python script.
+
+## このプロジェクトは、追加の機能と修正を加えた[StreamDiffusion-NDI](https://github.com/olegchomp/StreamDiffusion-NDI)のフォークです。
+
+主な変更点は以下の通りです：
+
+1. TDファイルを含むTouchDesignerフォルダを追加しました。
+2. `sd_ndi_td.py`スクリプトを修正して、TouchDesignerとの対話と2種類のプロンプトを処理できるようにしました。
+3. NDIソースをリフレッシュし、選択できるようにしました。
+4. conda環境をアクティベートし、Pythonスクリプトを開始するためのバッチファイルを作成しました。

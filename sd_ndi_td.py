@@ -19,6 +19,8 @@ from typing import List, Any, Tuple
 import json
 from PIL import Image
 
+import sys
+sys.path.append('C:\\StreamDiffusion')
 from utils.wrapper import StreamDiffusionWrapper
 
 def process_image(image_np: np.ndarray, range: Tuple[int, int] = (-1, 1)) -> Tuple[torch.Tensor, np.ndarray]:
@@ -101,7 +103,6 @@ stream = StreamDiffusionWrapper(
             use_safety_checker=False,
             # enable_similar_image_filter=True,
             # similar_image_filter_threshold=0.98,
-            engine_dir="engines"
         )
 
 stream.prepare(

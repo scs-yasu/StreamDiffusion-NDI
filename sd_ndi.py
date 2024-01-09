@@ -54,6 +54,7 @@ t_index_list = config_data['t_index_list']
 engine = config_data['engine']
 min_batch_size = config_data['min_batch_size']
 max_batch_size = config_data['max_batch_size']
+ndi_name = config_data['ndi_name']
 osc_out_adress = config_data['osc_out_adress']
 osc_out_port = config_data['osc_out_port']
 osc_in_adress = config_data['osc_in_adress']
@@ -73,10 +74,8 @@ stream = StreamDiffusion(
     pipe,
     t_index_list=t_index_list,
     torch_dtype=torch.float16,
-    frame_buffer_size = frame_buffer_size,
-    cfg_type="none"
+    frame_buffer_size = frame_buffer_size
 )
-
 
 # If the loaded model is not LCM, merge LCM
 stream.load_lcm_lora()
@@ -88,43 +87,33 @@ stream = accelerate_with_tensorrt(
     stream, engine, min_batch_size=min_batch_size ,max_batch_size=max_batch_size
 )
 
-prompt = ""
+prompt = "banana in space"
 # Prepare the stream
 stream.prepare(prompt)
 
 # NDI
 ndi_find = ndi.find_create_v2()
 
-sources = []
+source = ''
 while True:
-    print('Looking for sources ...')
-    ndi.find_wait_for_sources(ndi_find, 1000)
+    if not ndi.find_wait_for_sources(ndi_find, 5000):
+        print('NDI: No change to the sources found.')
+        continue
     sources = ndi.find_get_current_sources(ndi_find)
-    
-    if len(sources) > 0:
-        for i, source in enumerate(sources):
-            print(f"{i+1}: {source.ndi_name}")
-        
-        index = int(input("Enter the index of the source to connect to, or 0 to refresh: ")) - 1
-        
-        if index == -1:
-            continue
-        elif 0 <= index < len(sources):
-            target_source = sources[index]
-            break
-        else:
-            print("Invalid index. Please try again.")
-    else:
-        print("No sources found. Retrying...")
+    print('NDI: Network sources (%s found).' % len(sources))
+    for i, s in enumerate(sources):
+        print('%s. %s' % (i + 1, s.ndi_name))
+        if s.ndi_name == ndi_name:
+            source = s
+    if source != '':
+        print(f'NDI: Connected to {source.ndi_name}')
+        break   
 
-ndi_recv = ndi.recv_create_v3()
-ndi.recv_connect(ndi_recv, target_source)
-print(f"Connected to NDI source: {target_source.ndi_name}")
-
-print('NDI connected')
-
+ndi_recv_create = ndi.RecvCreateV3()
+ndi_recv_create.color_format = ndi.RECV_COLOR_FORMAT_BGRX_BGRA
+ndi_recv = ndi.recv_create_v3(ndi_recv_create)
+ndi.recv_connect(ndi_recv, source)
 ndi.find_destroy(ndi_find)
-cv.startWindowThread()
 send_settings = ndi.SendCreate()
 send_settings.ndi_name = 'SD-NDI'
 ndi_send = ndi.send_create(send_settings)
@@ -154,10 +143,7 @@ try:
         if shared_message is not None:
 
             prompt = str(shared_message)
-            stream.prepare(
-                prompt = prompt + ",masterpiece best quality",
-                negative_prompt = "(worst quality:2),(low quality:2),(normal quality:2),(deformed:1.3),(monochrome:1.2),(grayscale:1.2)"
-                )
+            stream.prepare(prompt)
             # Process the received message within the loop as needed
             print(f"Prompt: {prompt}")
             # Reset the shared_message variable
@@ -168,7 +154,6 @@ try:
         if t == ndi.FRAME_TYPE_VIDEO:
 
             frame = np.copy(v.data)
-            #print(frame.shape)
             framergb = cv.cvtColor(frame, cv.COLOR_BGRA2BGR)
 
             inputs = []
@@ -215,6 +200,5 @@ finally:
     ndi.recv_destroy(ndi_recv)
     ndi.send_destroy(ndi_send)
     ndi.destroy()
-    cv.destroyAllWindows()
     server.shutdown()
     server_thread.join()

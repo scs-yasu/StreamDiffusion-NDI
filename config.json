@@ -1,9 +1,10 @@
 {
 	"sd_model": "stabilityai/sd-turbo",
 	"t_index_list": [32, 45],
-	"engine": "../engines/stabilityai/sd-turbo",
+	"engine": "./engines/stabilityai/sd-turbo",
 	"min_batch_size": 1,
 	"max_batch_size": 2,
+	"ndi_name": "TouchDesigner-NDI",
 	"osc_out_adress": "127.0.0.1",
 	"osc_out_port": 12345,
 	"osc_in_adress": "127.0.0.1",
