@@ -73,8 +73,10 @@ stream = StreamDiffusion(
     pipe,
     t_index_list=t_index_list,
     torch_dtype=torch.float16,
-    frame_buffer_size = frame_buffer_size
+    frame_buffer_size = frame_buffer_size,
+    cfg_type="none"
 )
+
 
 # If the loaded model is not LCM, merge LCM
 stream.load_lcm_lora()
@@ -86,7 +88,7 @@ stream = accelerate_with_tensorrt(
     stream, engine, min_batch_size=min_batch_size ,max_batch_size=max_batch_size
 )
 
-prompt = "banana in space"
+prompt = ""
 # Prepare the stream
 stream.prepare(prompt)
 
@@ -94,17 +96,33 @@ stream.prepare(prompt)
 ndi_find = ndi.find_create_v2()
 
 sources = []
-while not len(sources) > 0:
+while True:
     print('Looking for sources ...')
     ndi.find_wait_for_sources(ndi_find, 1000)
     sources = ndi.find_get_current_sources(ndi_find)
+    
+    if len(sources) > 0:
+        for i, source in enumerate(sources):
+            print(f"{i+1}: {source.ndi_name}")
+        
+        index = int(input("Enter the index of the source to connect to, or 0 to refresh: ")) - 1
+        
+        if index == -1:
+            continue
+        elif 0 <= index < len(sources):
+            target_source = sources[index]
+            break
+        else:
+            print("Invalid index. Please try again.")
+    else:
+        print("No sources found. Retrying...")
+
+ndi_recv = ndi.recv_create_v3()
+ndi.recv_connect(ndi_recv, target_source)
+print(f"Connected to NDI source: {target_source.ndi_name}")
 
 print('NDI connected')
 
-ndi_recv_create = ndi.RecvCreateV3()
-ndi_recv_create.color_format = ndi.RECV_COLOR_FORMAT_BGRX_BGRA
-ndi_recv = ndi.recv_create_v3(ndi_recv_create)
-ndi.recv_connect(ndi_recv, sources[0])
 ndi.find_destroy(ndi_find)
 cv.startWindowThread()
 send_settings = ndi.SendCreate()
@@ -136,7 +154,10 @@ try:
         if shared_message is not None:
 
             prompt = str(shared_message)
-            stream.prepare(prompt)
+            stream.prepare(
+                prompt = prompt + ",masterpiece best quality",
+                negative_prompt = "(worst quality:2),(low quality:2),(normal quality:2),(deformed:1.3),(monochrome:1.2),(grayscale:1.2)"
+                )
             # Process the received message within the loop as needed
             print(f"Prompt: {prompt}")
             # Reset the shared_message variable
@@ -147,6 +168,7 @@ try:
         if t == ndi.FRAME_TYPE_VIDEO:
 
             frame = np.copy(v.data)
+            #print(frame.shape)
             framergb = cv.cvtColor(frame, cv.COLOR_BGRA2BGR)
 
             inputs = []

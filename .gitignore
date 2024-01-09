@@ -1,0 +1,3 @@
+# Ignore engines directory
+/engines/
+/__pycache__/

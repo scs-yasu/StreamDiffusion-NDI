@@ -32,3 +32,9 @@ Look in ```config.json``` for an example configuration.
 	"osc_out_port": client port for receiving FPS value,
 	"osc_in_adress": server address for receiving commands.,
 	"osc_in_port": server port for receiving commands.
+
+
+
+conda activate streamdiffusion_touchdesigner_3.10.0
+cd /StreamDiffusion-NDI
+python sd_ndi.py
