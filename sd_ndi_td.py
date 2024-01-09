@@ -20,6 +20,7 @@ import json
 from PIL import Image
 
 import sys
+# you need to change this path to your own path
 sys.path.append('C:\\StreamDiffusion')
 from utils.wrapper import StreamDiffusionWrapper
 
